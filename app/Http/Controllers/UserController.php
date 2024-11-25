@@ -95,7 +95,9 @@ class UserController extends Controller
      */
     public function show(string $id)
     {
-        $employee = User::find($id);
+        $employee = User::find(base64_decode($id));
+
+        $employee['image'] = DB::table('user_images')->where('user_id', $employee->id)->get()->first();
 
         if(isset($employee)){
             return response()->json([

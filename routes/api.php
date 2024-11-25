@@ -44,6 +44,8 @@ Route::group(['middleware' => ['auth:sanctum', 'cors']], function(){
     Route::post('/providers/search',     [ProviderController::class, 'searchItems']);
 
     Route::post('/products/all',     [ProductController::class, 'deleteAll']);
+
+    Route::post('/movements/all',     [MovementController::class, 'deleteAll']);
 });
 
 Route::post('/login',       [AuthController::class, 'login']);
