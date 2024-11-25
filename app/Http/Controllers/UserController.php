@@ -126,9 +126,26 @@ class UserController extends Controller
     public function update(Request $request, string $id)
     {
         $employee = User::find($id);
+        
+        $image64 = $request->get('image');
+        $imageType = explode('/', explode(';', $image64)[0])[1];
+        $imageName = Str::random(16).".$imageType";
+        file_put_contents($imageName, $image64);
+    
+        $new_image = ['name' => $imageName, 'user_id' => $employee->id];
+
+        $image = DB::table('user_image')->where('user_id', $id)->get()->first();
 
         if(isset($employee)){
-            $result = $employee->update($request->all());
+            $result = $employee->update($request->get('user'));
+            if($image){
+                $new_image['updated_at'] = date('Y-m-d H:i:s');
+                DB::table('user_image')->where('user_id', $id)->update($new_image);
+            }else{
+                $new_image['created_at'] = "";
+                DB::table('user_image')->insert($image);
+            }
+
             return response()->json([
                 'status' => true,
                 'message' => 'Funcionário atualizado com sucesso!'
