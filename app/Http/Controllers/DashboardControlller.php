@@ -22,7 +22,7 @@ class DashboardControlller extends Controller
 
         try {
             $this->quantityByCategory($from, $until, $type, $userId);
-            $this->sumByCategory();
+            $this->sumByCategory($from, $until, $type, $userId);
 
         } catch (\Throwable $th) {
             $status = false;        
@@ -79,15 +79,20 @@ class DashboardControlller extends Controller
         ];
     }
 
-    public function sumByCategory()
+    public function sumByCategory($from = "", $until = "", $type = "", $userId = null)
     {
         $total = DB::table('categories')
             ->join('products', 'categories.id', '=', 'products.category_id')
             ->join('movements', 'products.id', '=', 'movements.product_id')
             ->select('categories.name as category_name', DB::raw('SUM(movements.price) as price'))
+            ->where('movements.type', 'like', '%'.$type.'%')
+            ->when($userId, function($query, $userId){ // apenas adiciona o where se o id user não for nulo
+                return $query->where('movements.user_id', '=', $userId);
+            })
+            ->where('movements.created_at', '>=', $from)
+            ->where('movements.created_at', '<=', $until)
             ->groupBy('categories.name')
             ->get();
-        
         
         $labels = [];
         $sum    = [];
