@@ -12,11 +12,16 @@ class DashboardControlller extends Controller
     private $quantity = [];
     private $sum      = [];
 
-    public function index()
+    public function index(Request $request)
     {
         
+        $from   = request('from') ?? "";
+        $until  = request('until') ?? "";
+        $type   = request('type') ?? "";
+        $userId = request('user') ?? null;
+
         try {
-            $this->quantityByCategory();
+            $this->quantityByCategory($from, $until, $type, $userId);
             $this->sumByCategory();
 
         } catch (\Throwable $th) {
@@ -30,14 +35,34 @@ class DashboardControlller extends Controller
         ]);
     }
 
-    public function quantityByCategory()
+    public function quantityByCategory($from = "", $until = "", $type = "", $userId = null)
     {
-        $total = DB::table('categories')
-            ->join('products', 'categories.id', '=', 'products.category_id')
-            ->join('movements', 'products.id', '=', 'movements.product_id')
-            ->select('categories.name as category_name', DB::raw('SUM(movements.quantity) as total_quantity'))
-            ->groupBy('categories.name')
-            ->get();
+
+
+        if($from != "" or $until != "" or $type != "" or $userId != ""){
+            $total = DB::table('categories')
+                ->join('products', 'categories.id', '=', 'products.category_id')
+                ->join('movements', 'products.id', '=', 'movements.product_id')
+                ->select('categories.name as category_name', DB::raw('SUM(movements.quantity) as total_quantity'))
+                ->where('movements.type', 'like', '%'.$type.'%')
+                ->when($userId, function ($query, $userId) { // apenas adiciona o where se o id user não for nulo
+                    return $query->where('movements.user_id', '=', $userId);
+                })
+                ->where('movements.created_at', '>=', $from)
+                ->where('movements.created_at', '<=', $until)
+                ->groupBy('categories.name')
+                ->get();
+
+        } else{
+
+            $total = DB::table('categories')
+                ->join('products', 'categories.id', '=', 'products.category_id')
+                ->join('movements', 'products.id', '=', 'movements.product_id')
+                ->select('categories.name as category_name', DB::raw('SUM(movements.quantity) as total_quantity'))
+                ->groupBy('categories.name')
+                ->get();
+        }
+
           
         $labels = [];
         $amount = [];

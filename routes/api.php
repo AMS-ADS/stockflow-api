@@ -46,7 +46,7 @@ Route::group(['middleware' => ['auth:sanctum', 'cors']], function(){
     Route::post('/products/all',        [ProductController::class, 'deleteAll']);
     
     // Dashboard
-    Route::get('/dashboard',        [DashboardControlller::class, 'index']);
+    Route::post('/dashboard',        [DashboardControlller::class, 'index']);
 
 });
 
