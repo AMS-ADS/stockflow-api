@@ -11,6 +11,7 @@ use \App\Http\Controllers\ProductController;
 use \App\Http\Controllers\MovementController;
 use \App\Http\Controllers\AuthController;
 use \App\Http\Controllers\UserController;
+use \App\Http\Controllers\DashboardControlller;
 
 /*
 |--------------------------------------------------------------------------
@@ -25,8 +26,8 @@ use \App\Http\Controllers\UserController;
 
 Route::group(['middleware' => ['auth:sanctum', 'cors']], function(){
     
-    Route::get('/movements/entry', [MovementController::class, 'showEntry']);
-    Route::get('/movements/out', [MovementController::class, 'showOut']);
+    Route::get('/movements/entry',  [MovementController::class, 'showEntry']);
+    Route::get('/movements/out',    [MovementController::class, 'showOut']);
 
     Route::apiResources([
         'category'        => CategoryController::class,
@@ -37,14 +38,17 @@ Route::group(['middleware' => ['auth:sanctum', 'cors']], function(){
         'users'           => UserController::class,
     ]);    
 
-    Route::post('/users/all',     [UserController::class, 'deleteAll']);
-    Route::post('/users/search',     [UserController::class, 'searchItems']);
-
-    Route::post('/providers/all',     [ProviderController::class, 'deleteAll']);
-    Route::post('/providers/search',     [ProviderController::class, 'searchItems']);
+    // Searchs
+    Route::post('/users/all',           [UserController::class, 'deleteAll']);
+    Route::post('/users/search',        [UserController::class, 'searchItems']);
+    Route::post('/providers/all',       [ProviderController::class, 'deleteAll']);
+    Route::post('/providers/search',    [ProviderController::class, 'searchItems']);
+    Route::post('/products/all',        [ProductController::class, 'deleteAll']);
+    
+    // Dashboard
+    Route::post('/dashboard',        [DashboardControlller::class, 'index']);
 
     Route::post('/products/all',     [ProductController::class, 'deleteAll']);
-
     Route::post('/movements/all',     [MovementController::class, 'deleteAll']);
 });
 
