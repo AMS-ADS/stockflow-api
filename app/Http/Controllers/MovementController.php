@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use \App\Models\Movement;
+use App\Models\Product;
 use Illuminate\Support\Facades\DB;
 
 
@@ -195,16 +196,42 @@ class MovementController extends Controller
     public function update(Request $request, string $id)
     {
         $movement = Movement::find($id);
+        $newMovement = $request->all();
+        $product = Product::find($movement->product_id);
+        $result = null;
 
         if(isset($movement)){
+            if($newMovement['product_id'] == $movement->product_id){
+                $diference = $newMovement['quantity'] - $movement->quantity;
+                
+                if($newMovement['type'] == "S"){
+                    $product->decrement('quantity', $diference);
+                }else{
+                    $product->increment('quantity', $diference);
+                }
+                
+                $result = $movement->update($newMovement);
+            }else{
+                if($movement->type == "E"){
+                    $product->update(['quantity' => ($product->quantity - $movement->quantity)]);
+                }
+                if($movement->type == "S"){
+                    $product->update(['quantity' => ($product->quantity + $movement->quantity)]);
+                }
 
-            $result = $movement->update($request->all());
-            return response()->json([
-                'status' => true,
-                'message' => 'Movimentação atualizado com sucesso!'
-            ], 200);
-            
-            
+                $result = $this->verifyType($newMovement['product_id'], $newMovement['type'], $newMovement['quantity']);
+
+                if($result['status']){
+                    $result = $movement->update($newMovement);
+                }
+            }
+
+            if($result){
+                return response()->json([
+                    'status' => true,
+                    'message' => 'Movimentação atualizada com sucesso!'
+                ], 200);
+            }
         }
 
         return response()->json([
@@ -239,5 +266,42 @@ class MovementController extends Controller
             'status' => false,
             'message' => 'Movimentação não encontrada!'
         ], 404);
+    }
+
+    public function deleteAll(Request $request){
+
+        $items  = $request->all();
+        $status = true;
+
+        for ($i=0; $i < count($items); $i++) { 
+            
+            $movement = Movement::find($items[$i]); 
+            
+            if($movement->type == "S"){
+                Product::find($movement->product_id)->increment('quantity', $movement->quantity);
+            }else{
+                Product::find($movement->product_id)->decrement('quantity', $movement->quantity);
+            }
+
+            $movement->delete();
+
+            if(!$movement){
+                $status  = false;
+                break;
+            }
+        }
+
+        if($status){
+            return response()->json([
+                'status'    => true, 
+                'message'   => "Produtos deletados com sucesso!"
+            ], 200);     
+        }
+
+        return response()->json([
+            'status'    => false, 
+            'message'   => "Erro ao realizar operação!"
+        ], 400);     
+    
     }
 }
